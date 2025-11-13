@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Airbnb Booking Price Estimator</title>
+    <title>Tivoli Group of Resorts Booking Price Estimator</title>
     <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Configure Tailwind to use Inter font and custom colors if needed -->
@@ -12,7 +12,7 @@
             theme: {
                 extend: {
                     colors: {
-                        'primary': '#FF5A5F', // Airbnb Red
+                        'primary': '#FF5A5F', // Primary Red
                         'secondary': '#484848',
                         'accent': '#00A699',
                     },
@@ -28,6 +28,19 @@
         .card-shadow {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
+        /* Custom style for the slider track color */
+        input[type=range]::-webkit-slider-runnable-track {
+            background: #e5e7eb;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #FF5A5F; /* Primary color */
+            cursor: pointer;
+            margin-top: -6px; /* Adjust for track height */
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen flex items-center justify-center p-4 font-sans">
@@ -35,8 +48,8 @@
     <div id="app" class="w-full max-w-lg bg-white rounded-xl overflow-hidden card-shadow">
         
         <header class="bg-primary p-6 text-white text-center">
-            <h1 class="text-3xl font-extrabold tracking-tight">Booking Price Estimator</h1>
-            <p class="text-sm opacity-90 mt-1">Estimate the cost of your next stay.</p>
+            <h1 class="text-3xl font-extrabold tracking-tight">Tivoli Group of Resorts<br>Booking Price Estimator</h1>
+            <p class="text-sm opacity-90 mt-1">Estimate the cost of your next stay with us (Prices in **₱**).</p>
         </header>
 
         <main class="p-6 space-y-6">
@@ -48,9 +61,9 @@
                 <div>
                     <label for="houseSelect" class="block text-sm font-medium text-secondary mb-1">Select House</label>
                     <select id="houseSelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-150 ease-in-out">
-                        <option value="A" selected>The Coastal Cottage (Base Rate: $150/night)</option>
-                        <option value="B">Downtown Loft (Base Rate: $220/night)</option>
-                        <option value="C">Mountain Retreat (Base Rate: $180/night)</option>
+                        <option value="A" selected>Amansara (Max 7 Rooms, Max 50 Guests)</option>
+                        <option value="B">One Tivoli (Max 5 Rooms, Max 50 Guests)</option>
+                        <option value="C">Maywood (Max 4 Rooms, Max 25 Guests)</option>
                     </select>
                 </div>
 
@@ -66,23 +79,36 @@
                     </div>
                 </div>
 
-                <!-- Rooms Selection -->
+                <!-- Guest Capacity Slider and Number Box -->
                 <div>
-                    <label for="roomsInput" class="block text-sm font-medium text-secondary mb-1">Number of Rooms (1-4)</label>
-                    <input type="number" id="roomsInput" min="1" max="4" value="1" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-primary focus:border-primary transition duration-150 ease-in-out">
+                    <label for="guestsSlider" class="block text-sm font-medium text-secondary mb-1 flex justify-between items-center">
+                        <span id="guestLabel">Number of Guests (1 - 50)</span>
+                        <span id="guestCountDisplay" class="font-bold text-primary text-xl">1</span>
+                    </label>
+                    <div class="flex items-center space-x-4">
+                        <!-- The max attribute will be dynamically set by JS on load/change -->
+                        <input type="range" id="guestsSlider" min="1" max="50" value="1" step="1" 
+                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
+                        <input type="number" id="guestsNumber" min="1" max="50" value="1"
+                               class="w-16 p-2 border border-gray-300 rounded-lg text-center focus:ring-primary focus:border-primary">
+                    </div>
                 </div>
+
             </div>
-
-            <!-- Calculation Button -->
-            <button id="calculateBtn" class="w-full bg-accent hover:bg-opacity-90 text-white font-semibold py-3 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-[1.01] focus:outline-none focus:ring-4 focus:ring-accent focus:ring-opacity-50">
-                Calculate Booking Estimate
-            </button>
-
+            
             <!-- Result Display -->
             <div id="resultContainer" class="p-4 bg-primary bg-opacity-10 rounded-lg border border-primary transition-all duration-300 ease-out hidden">
-                <h3 class="text-xl font-bold text-primary mb-2">Estimated Total:</h3>
-                <p id="totalPriceDisplay" class="text-3xl font-extrabold text-primary">$0.00</p>
-                <p id="detailsDisplay" class="text-sm text-secondary mt-1"></p>
+                
+                <!-- ESTIMATED TOTAL PRICE DISPLAY -->
+                <h3 class="text-xl font-bold text-secondary mb-2">Estimated Total:</h3>
+                <p id="totalPriceDisplay" class="text-3xl font-extrabold text-primary mb-4">₱0.00</p> 
+
+                <!-- REQUIRED ROOMS DISPLAY -->
+                <h3 class="text-xl font-bold text-secondary mb-2">Required Rooms:</h3>
+                <p id="roomsRequiredDisplay" class="text-3xl font-extrabold text-primary">0</p> 
+                
+                <!-- DETAILED BREAKDOWN -->
+                <p id="detailsDisplay" class="text-sm text-secondary mt-4"></p>
             </div>
 
             <!-- Error/Message Box -->
@@ -97,27 +123,72 @@
         const houseSelect = document.getElementById('houseSelect');
         const checkInDate = document.getElementById('checkInDate');
         const checkOutDate = document.getElementById('checkOutDate');
-        const roomsInput = document.getElementById('roomsInput');
-        const calculateBtn = document.getElementById('calculateBtn');
+        const guestsSlider = document.getElementById('guestsSlider');
+        const guestsNumber = document.getElementById('guestsNumber');
+        const guestCountDisplay = document.getElementById('guestCountDisplay');
+        const guestLabel = document.getElementById('guestLabel');
         const resultContainer = document.getElementById('resultContainer');
         const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+        const roomsRequiredDisplay = document.getElementById('roomsRequiredDisplay'); 
         const detailsDisplay = document.getElementById('detailsDisplay');
         const messageBox = document.getElementById('messageBox');
         const errorMessage = document.getElementById('errorMessage');
-
-        // Define pricing structure (House, Base Rate per Night)
+        
+        // Configuration Constants
+        const CURRENCY_SYMBOL = '₱';
+        const SERVICE_FEE = 0; // Set to 0 as requested to remove the service fee.
+        
+        // --- PRICING STRUCTURE ---
         const PRICING = {
-            'A': 150, // The Coastal Cottage
-            'B': 220, // Downtown Loft
-            'C': 180, // Mountain Retreat
-        };
-
-        // Define room multipliers
-        const ROOM_MULTIPLIERS = {
-            1: 1.0,   // 1 room: standard rate
-            2: 1.6,   // 2 rooms: 60% increase
-            3: 2.1,   // 3 rooms: 110% increase
-            4: 2.5,   // 4 rooms: 150% increase
+            'A': { // Amansara - FIXED TIERED PRICING
+                maxRooms: 7, 
+                maxGuests: 50,
+                pricingType: 'fixed',
+                rates: [
+                    { guests: [1, 20], weekday: 16000, friday: 22000, weekend: 28000 },
+                    { guests: [21, 25], weekday: 18000, friday: 24000, weekend: 28000 },
+                    { guests: [26, 30], weekday: 20000, friday: 26000, weekend: 30000 },
+                    { guests: [31, 35], weekday: 22000, friday: 28000, weekend: 32000 },
+                    { guests: [36, 40], weekday: 24000, friday: 30000, weekend: 34000 },
+                    { guests: [41, 50], weekday: 26000, friday: 32000, weekend: 35000 }, 
+                ],
+                // Room Tiers for Display 
+                roomTiers: [
+                    { guests: 1, rooms: 3 }, { guests: 21, rooms: 4 }, { guests: 26, rooms: 5 }, 
+                    { guests: 31, rooms: 6 }, { guests: 41, rooms: 7 }
+                ]
+            },
+            'B': { // One Tivoli - FIXED TIERED PRICING
+                maxRooms: 5, 
+                maxGuests: 50,
+                pricingType: 'fixed', 
+                rates: [
+                    { guests: [1, 20], weekday: 16000, friday: 22000, weekend: 28000 },
+                    { guests: [21, 30], weekday: 18000, friday: 25000, weekend: 30000 },
+                    { guests: [31, 35], weekday: 20000, friday: 28000, weekend: 32000 },
+                    { guests: [36, 40], weekday: 22000, friday: 30000, weekend: 34000 },
+                    { guests: [41, 50], weekday: 26000, friday: 32000, weekend: 35000 }, 
+                ],
+                // Room Tiers for Display 
+                roomTiers: [
+                    { guests: 1, rooms: 2 }, { guests: 21, rooms: 3 }, { guests: 31, rooms: 4 }, 
+                    { guests: 36, rooms: 5 }
+                ]
+            },
+            'C': { // Maywood - FIXED TIERED PRICING
+                maxRooms: 4, 
+                maxGuests: 25,
+                pricingType: 'fixed', 
+                rates: [
+                    { guests: [1, 10], weekday: 10000, friday: 14000, weekend: 18000 },
+                    { guests: [11, 19], weekday: 11000, friday: 15000, weekend: 19000 },
+                    { guests: [20, 25], weekday: 12000, friday: 16000, weekend: 20000 },
+                ],
+                // Room Tiers for Display 
+                roomTiers: [
+                    { guests: 1, rooms: 2 }, { guests: 11, rooms: 3 }, { guests: 20, rooms: 4 }
+                ]
+            },
         };
 
         // Set initial min date to today
@@ -125,10 +196,106 @@
         checkInDate.setAttribute('min', today);
         checkOutDate.setAttribute('min', today);
 
+        // --- Utility Function for Currency Formatting (with digit group separator) ---
+        function formatCurrency(amount) {
+            // Use Intl.NumberFormat for Philippine Pesos (en-PH) to ensure
+            // comma separators (digit grouping) and two decimal places.
+            return new Intl.NumberFormat('en-PH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+        
+        // --- Core Logic: Determine Rooms based on Guest Count ---
+        function getRoomsByGuestCount(houseId, guests, maxRooms) {
+            const houseData = PRICING[houseId];
+            let requiredRooms = 2; // Default minimum room count
+
+            // Use the tiered array specific to the house
+            const tiers = houseData.roomTiers;
+
+            // Find the highest tier that the current guest count qualifies for
+            for (let i = tiers.length - 1; i >= 0; i--) {
+                if (guests >= tiers[i].guests) {
+                    requiredRooms = tiers[i].rooms;
+                    break;
+                }
+            }
+            
+            // Ensure the calculated room count does not exceed the house's maximum capacity
+            const finalRooms = Math.min(requiredRooms, maxRooms);
+
+            // The absolute minimum room count based on the tier system is 2 (for 1-10 or 1-20 guests)
+            return Math.max(finalRooms, 2); 
+        }
+
+        // --- Guest Input Sync Function ---
+        function syncGuestInputs() {
+            const value = parseInt(guestsSlider.value);
+            guestsNumber.value = value;
+            guestCountDisplay.textContent = value;
+            calculateEstimate(); 
+        }
+
+        guestsSlider.addEventListener('input', syncGuestInputs);
+        guestsNumber.addEventListener('input', () => {
+            let value = parseInt(guestsNumber.value);
+            const max = parseInt(guestsNumber.max);
+            const min = parseInt(guestsNumber.min);
+            
+            if (isNaN(value) || value < min) {
+                value = min;
+            } else if (value > max) {
+                value = max;
+            }
+            
+            guestsNumber.value = value;
+            guestsSlider.value = value;
+            guestCountDisplay.textContent = value;
+            calculateEstimate(); 
+        });
+        
+        // Function to update the max attributes on the guests inputs and the label
+        function updateGuestConstraints() {
+            const houseId = houseSelect.value;
+            const houseData = PRICING[houseId];
+            const maxGuests = houseData.maxGuests; 
+
+            // 1. Update Guest Constraints (Max)
+            guestsSlider.setAttribute('max', maxGuests); 
+            guestsNumber.setAttribute('max', maxGuests); 
+            guestLabel.textContent = `Number of Guests (1 - ${maxGuests})`;
+
+            // Adjust current guest value if out of bounds (and update if necessary)
+            let currentGuests = parseInt(guestsNumber.value);
+            if (currentGuests < 1) { 
+                currentGuests = 1;
+            } else if (currentGuests > maxGuests) {
+                currentGuests = maxGuests;
+            }
+            // Ensure UI reflects current (or adjusted) value
+            guestsNumber.value = currentGuests;
+            guestsSlider.value = currentGuests;
+            guestCountDisplay.textContent = currentGuests;
+
+            // Recalculate on constraint change
+            calculateEstimate();
+        }
+
+        // Attach listeners for dynamic constraints updates
+        houseSelect.addEventListener('change', updateGuestConstraints);
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set initial constraints and run initial calculation when the page loads
+            updateGuestConstraints(); 
+            calculateEstimate();
+        }); 
+
+
         // Helper function to show messages (errors or success)
         function showMessage(text, isError = true) {
             errorMessage.textContent = text;
-            messageBox.classList.remove('hidden', isError ? 'bg-green-100' : 'bg-red-100');
+            messageBox.classList.remove('hidden');
+            messageBox.classList.remove('bg-green-100', 'bg-red-100');
             messageBox.classList.add(isError ? 'bg-red-100' : 'bg-green-100');
             resultContainer.classList.add('hidden');
         }
@@ -145,11 +312,16 @@
             const houseId = houseSelect.value;
             const checkIn = new Date(checkInDate.value);
             const checkOut = new Date(checkOutDate.value);
-            const rooms = parseInt(roomsInput.value);
+            const guests = parseInt(guestsNumber.value);
 
+            // Get dynamic data from PRICING object
+            const houseData = PRICING[houseId];
+            const maxRooms = houseData.maxRooms;
+            const maxGuests = houseData.maxGuests; 
+            
             // 2. Validation
             if (!checkInDate.value || !checkOutDate.value) {
-                showMessage("Please select both a Check-in and Check-out date.");
+                resultContainer.classList.add('hidden');
                 return;
             }
 
@@ -158,57 +330,116 @@
                 return;
             }
 
-            if (rooms < 1 || rooms > 4) {
-                showMessage("Number of rooms must be between 1 and 4.");
+            // Guest validation logic
+            if (guests < 1 || guests > maxGuests || isNaN(guests)) {
+                showMessage(`Number of guests must be between 1 and ${maxGuests} for this house.`, true);
                 return;
             }
+            
+            // 3. Determine Rooms (based on specific house logic)
+            const finalRooms = getRoomsByGuestCount(houseId, guests, maxRooms);
 
-            // 3. Calculate Nights
-            const timeDiff = checkOut.getTime() - checkIn.getTime();
-            const nights = Math.ceil(timeDiff / (1000 * 3600 * 24)); // Round up to ensure a minimum of 1 night
+            // 4. Calculate Nights & Costs per Day
+            const checkInTime = checkIn.getTime();
+            const checkOutTime = checkOut.getTime();
+            
+            const MS_PER_DAY = 1000 * 3600 * 24;
+            let totalNights = 0;
+            let totalBaseBookingCost = 0;
+            let totalWeekendNights = 0;
+            let totalFridayNights = 0;
+            let totalWeekdayNights = 0;
+            
+            // --- Determine rate per night based on day type and guest count (Fixed Logic for all houses) ---
+            for (let time = checkInTime; time < checkOutTime; time += MS_PER_DAY) {
+                totalNights++;
+                const currentDate = new Date(time);
+                const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+                
+                let dailyRate = 0;
+                let dayTypeLabel = '';
+                
+                // A. Find the correct guest tier rate object
+                const rateTier = houseData.rates.find(tier => 
+                    guests >= tier.guests[0] && guests <= tier.guests[1]
+                );
 
-            if (nights < 1) {
+                if (!rateTier) {
+                    showMessage("Could not find a valid rate for this guest count and house. Please check guest limits.", true);
+                    return;
+                }
+
+                // B. Determine the price based on day type
+                if (dayOfWeek === 5) { // Friday (5)
+                    dailyRate = rateTier.friday;
+                    dayTypeLabel = 'Friday';
+                    totalFridayNights++;
+                } else if (dayOfWeek === 6) { // Saturday (6) is Weekend/Holiday
+                    dailyRate = rateTier.weekend;
+                    dayTypeLabel = 'Weekend/Holiday';
+                    totalWeekendNights++;
+                } else { // Sunday (0) to Thursday (4) are Weekday
+                    dailyRate = rateTier.weekday;
+                    dayTypeLabel = 'Weekday';
+                    totalWeekdayNights++;
+                }
+                
+                totalBaseBookingCost += dailyRate;
+            }
+
+            if (totalNights < 1) {
                  showMessage("Booking must be for at least one night.");
                  return;
             }
 
-            // 4. Calculate Price Components
-            const baseRate = PRICING[houseId];
-            const roomMultiplier = ROOM_MULTIPLIERS[rooms];
-            
-            // Additional simulated fee (e.g., Cleaning Fee, independent of nights)
-            const serviceFee = 50; 
-            
-            // Price = (Nights * BaseRate * RoomMultiplier) + ServiceFee
-            const subtotal = nights * baseRate * roomMultiplier;
-            const totalPrice = subtotal + serviceFee;
+            // 5. Final Calculation
+            const subtotal = totalBaseBookingCost; 
+            const totalPrice = subtotal + SERVICE_FEE; // SERVICE_FEE is 0 now.
 
-            // 5. Display Result
+            // 6. Display Result
             const houseName = houseSelect.options[houseSelect.selectedIndex].text.split(' (')[0];
 
-            totalPriceDisplay.textContent = `$${totalPrice.toFixed(2)}`;
-            detailsDisplay.innerHTML = `
-                <span class="font-semibold">${nights} nights</span> at ${houseName} (${rooms} rooms) <br>
-                Subtotal: $${subtotal.toFixed(2)} (Rate: $${(baseRate * roomMultiplier).toFixed(2)}/night) <br>
-                Service Fee: $${serviceFee.toFixed(2)}
+            // UPDATE ROOMS DISPLAY
+            roomsRequiredDisplay.textContent = finalRooms;
+            
+            // UPDATE TOTAL PRICE DISPLAY
+            // Using formatCurrency for separators
+            totalPriceDisplay.textContent = `${CURRENCY_SYMBOL}${formatCurrency(totalPrice)}`;
+            
+            // Detailed breakdown 
+            let detailsHtml = `
+                <span class="font-semibold">${totalNights} nights</span> total at ${houseName} 
+                (${guests} guests, ${finalRooms} rooms required)<br>
+                <span class="font-bold">${totalWeekdayNights} Weekday night(s)</span> | 
+                <span class="font-bold">${totalFridayNights} Friday night(s)</span> | 
+                <span class="font-bold">${totalWeekendNights} Weekend/Holiday night(s)</span>.
             `;
+            
+            // Since all houses are now fixed, the label is consistent
+            let baseCostLabel = 'Total Fixed Nightly Rate Cost'; 
+
+            detailsHtml += `
+                <br>${baseCostLabel}: ${CURRENCY_SYMBOL}${formatCurrency(totalBaseBookingCost)}
+                <br>Total Final Price: ${CURRENCY_SYMBOL}${formatCurrency(totalPrice)}
+            `;
+
+            detailsDisplay.innerHTML = detailsHtml;
             
             resultContainer.classList.remove('hidden');
         }
 
-        // Event Listener
-        calculateBtn.addEventListener('click', calculateEstimate);
-
-        // Ensure check-out date is always after check-in date
+        // Event listeners for dates (now also trigger calculation)
         checkInDate.addEventListener('change', () => {
             if (checkInDate.value) {
                 checkOutDate.setAttribute('min', checkInDate.value);
-                // If check-out is before check-in, reset it
                 if (checkOutDate.value && new Date(checkOutDate.value) <= new Date(checkInDate.value)) {
                     checkOutDate.value = '';
                 }
             }
+            calculateEstimate();
         });
+        checkOutDate.addEventListener('change', calculateEstimate);
+
     </script>
 
 </body>
